@@ -1,0 +1,2 @@
+# products
+Products server endpoint
