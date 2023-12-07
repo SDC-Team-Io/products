@@ -1,0 +1,24 @@
+{
+  "name": "products",
+  "version": "1.0.0",
+  "description": "Hack Reactor SDC products endpoint",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "populate": "node db/populaters/populateAll.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SDC-Team-Io/products.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SDC-Team-Io/products/issues"
+  },
+  "homepage": "https://github.com/SDC-Team-Io/products#readme",
+  "dependencies": {
+    "csv-parse": "^5.5.2",
+    "mongoose": "^8.0.2"
+  }
+}
