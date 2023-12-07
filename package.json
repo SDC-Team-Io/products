@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "populate": "node db/ETL.js"
+    "populate": "node db/populaters/populateAll.js"
   },
   "repository": {
     "type": "git",

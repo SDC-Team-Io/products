@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const productsSchema = require('./productsSchema');
 const fs = require('fs');
 
-const url = 'mongodb://localhost:27017/test'
+const url = 'mongodb://localhost:27017/products'
 const certificate = 'db/mongoose-certificate.pem';
 
 const product = __dirname + '/csvs/product.csv';
@@ -13,22 +13,26 @@ const styles = __dirname + '/csvs/styles.csv';
 const photos = __dirname + '/csvs/photos.csv';
 const skus = __dirname + '/csvs/skus.csv';
 
-const populateData = async () => {
+const populateData = async (path, constructor, page) => {
   await mongoose.connect(url)
 
   const products = mongoose.model('products', productsSchema);
 
   console.log("Connected to MongoDB.");
 
-  const readData = (path, constructor) => new Promise((resolve, reject) => {
+  const readData = (path, constructor, page) => new Promise((resolve, reject) => {
     let doc = [];
     let length = doc.length;
 
     let chunk = [];
 
-    console.log('Reading from file ' + path + '...');
+    console.log('Reading from '  + (page ? 'page ' + page + ' of ' : '') + 'file ' + path + '...');
     fs.createReadStream(path)
-      .pipe(parse({ delimiter: ",", from_line: 1 }))
+      .pipe(parse({
+        delimiter: ",",
+        from_line: page ? (page * 2000000) - 1999999 : 1 ,
+        to_line: page ? (page * 2000000) : undefined
+      }))
       .on("data", function (row) {
         let writeItem = constructor(row);
         if(writeItem) {
@@ -51,6 +55,7 @@ const populateData = async () => {
             delete res;
             delete chunk;
             console.log('Lines ' + i + ' to ' + (i + chunk.length - 1) + ' done.');
+            if(!(i % 1000000)) console.log(path + (page ? ' page ' + page : ''));
             if(i < doc.length) {
               count++;
               writeDocs()
@@ -70,40 +75,71 @@ const populateData = async () => {
         })
         writeDocs()
         .then(() => {
-          console.log('Finished writing ' + path)
+          console.log('Finished writing ' + (page ? 'page ' + page + ' of ' : '') + path)
           resolve();
         })
         .catch(err => reject(err));
       })
   })
+  if(path && constructor) readData(path, constructor)
+  .then(() => {
+    console.log('Done!')
+    mongoose.connection.close();
+  })
+  .catch((err) => {
+    console.error(err);
+    mongoose.connection.close();
+  });
 
-  module.exports.populateProducts = () => readData(product, productConstructor);
-  module.exports.populateStyles = () => readData(styles, stylesConstructor);
-  module.exports.populateFeatures = () => readData(features, featuresConstructor);
-  module.exports.populatePhotos = () => readData(photos, photosConstructor);
-  module.exports.populateRelated = () => readData(related, relatedConstructor);
-  module.exports.populateSkus = () => readData(skus, skusConstructor);
 
-  module.exports.populateStyles()
+  if(!path || !constructor) readData(styles, stylesConstructor)
   .then((res) => {
     delete res;
-    return module.exports.populatePhotos();
+    return readData(photos, photosConstructor, 1);
   })
   .then((res) => {
     delete res;
-    return module.exports.populateProducts();
+    return readData(photos, photosConstructor, 2);
   })
   .then((res) => {
     delete res;
-    return module.exports.populateFeatures();
+    return readData(photos, photosConstructor, 3);
   })
   .then((res) => {
     delete res;
-    return module.exports.populateRelated();
+    return readData(product, productConstructor);
   })
   .then((res) => {
     delete res;
-    return module.exports.populateSkus();
+    return readData(features, featuresConstructor);
+  })
+  .then((res) => {
+    delete res;
+    return readData(related, relatedConstructor);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 1);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 2);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 3);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 4);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 5);
+  })
+  .then((res) => {
+    delete res;
+    return readData(skus, skusConstructor, 6);
   })
   .then(() => {
     console.log('Done!')
@@ -142,9 +178,11 @@ const featuresConstructor = (data) => {
   query.updateOne = {
     filter: { product_id: data[1] },
     update: {
-      features: {
-        feature: data[2],
-        value: data[3],
+      $push: {
+        features: {
+          feature: data[2],
+          value: data[3],
+        }
       }
     }
   }
@@ -160,6 +198,7 @@ const stylesConstructor = (data) => {
     update: {
       product_id: data[1],
       $push: {
+        features: [],
         styles: {
           style_id: data[0],
           name: data[2],
@@ -178,7 +217,7 @@ const skusConstructor = (data) => {
   data[1] = Number(data[1])
   if(!data[1]) return;
   let query = {};
-  query.insertOne = {
+  query.updateOne = {
     filter: { 'styles.style_id': { $eq: data[1] } },
     update: {
       $push: {
@@ -228,5 +267,17 @@ const relatedConstructor = (data) => {
   return query;
 }
 
-
-populateData();
+module.exports.populateProducts = () => populateData(product, productConstructor);
+module.exports.populateStyles = () => populateData(styles, stylesConstructor);
+module.exports.populateFeatures = () => populateData(features, featuresConstructor);
+module.exports.populatePhotos1 = () => populateData(photos, photosConstructor, 1);
+module.exports.populatePhotos2 = () => populateData(photos, photosConstructor, 2);
+module.exports.populatePhotos3 = () => populateData(photos, photosConstructor, 3);
+module.exports.populateRelated = () => populateData(related, relatedConstructor);
+module.exports.populateSkus1 = () => populateData(skus, skusConstructor, 1);
+module.exports.populateSkus2 = () => populateData(skus, skusConstructor, 2);
+module.exports.populateSkus3 = () => populateData(skus, skusConstructor, 3);
+module.exports.populateSkus4 = () => populateData(skus, skusConstructor, 4);
+module.exports.populateSkus5 = () => populateData(skus, skusConstructor, 5);
+module.exports.populateSkus6 = () => populateData(skus, skusConstructor, 6);
+module.exports.populateData = populateData;
