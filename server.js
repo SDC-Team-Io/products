@@ -21,3 +21,6 @@ mongoose.connect(url)
     console.log('Products Server Live on Port ' + port);
   })
 })
+.catch(() => {
+  console.error('Error connection to Mongo Database');
+})

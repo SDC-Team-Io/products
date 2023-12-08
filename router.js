@@ -6,8 +6,9 @@ const productsSchema = require('./db/productsSchema')
 const products = mongoose.model('products', productsSchema);
 
 router.get('/products/:id', (req, res) => {
-  console.log('Serving GET at endpoint /products for ip ' + req.ip);
+
   products.findOne({product_id: req.params.id}, {
+    _id: 0,
     product_id: 1,
     name: 1,
     slogan: 1,
@@ -17,8 +18,12 @@ router.get('/products/:id', (req, res) => {
     features: 1,
   })
   .then((data) => {
+    if (!data) res.send(404);
     data.id = data.product_id;
     res.send(data);
+  })
+  .catch(() => {
+     res.status(500).send('Error fetching product ' + req.params.id);
   })
 })
 
