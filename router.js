@@ -53,7 +53,6 @@ router.get('/products/:id', (req, res) => {
       res.sendStatus(404);
     } else {
       res.send(data);
-      data.id = data.product_id;
     }
   })
   .catch(() => {
