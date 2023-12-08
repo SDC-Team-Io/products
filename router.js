@@ -13,7 +13,7 @@ router.get('/products', (req, res) => {
 
   products.find({}, {
     _id: 0,
-    product_id: 1,
+    id: 1,
     name: 1,
     slogan: 1,
     description: 1,
@@ -37,7 +37,7 @@ router.get('/products/:id', (req, res) => {
 
   products.findOne({product_id: req.params.id}, {
     _id: 0,
-    product_id: 1,
+    id: 1,
     name: 1,
     slogan: 1,
     description: 1,

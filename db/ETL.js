@@ -1,6 +1,6 @@
 const { parse } = require('csv-parse');
 const mongoose = require('mongoose');
-const productsSchema = require('./productsSchema');
+const productsSchema = require('./productsSchemaNew');
 const fs = require('fs');
 
 const url = 'mongodb://localhost:27017/products'
@@ -158,6 +158,7 @@ const productConstructor = (data) => {
     filter: { product_id: data[0] },
     update: {
       product_id: data[0] * 1,
+      id: data[0] * 1,
       name: data[1],
       slogan: data[2],
       description: data[3],
@@ -197,6 +198,7 @@ const stylesConstructor = (data) => {
     filter: { product_id: data[1] },
     update: {
       product_id: data[1],
+      id: data[1],
       $push: {
         features: [],
         styles: {
