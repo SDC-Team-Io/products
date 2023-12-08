@@ -2,7 +2,7 @@
   "name": "products",
   "version": "1.0.0",
   "description": "Hack Reactor SDC products endpoint",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "jest",
     "populate": "node db/populaters/populateAll.js"
@@ -19,6 +19,8 @@
   "homepage": "https://github.com/SDC-Team-Io/products#readme",
   "dependencies": {
     "csv-parse": "^5.5.2",
-    "mongoose": "^8.0.2"
+    "express": "^4.18.2",
+    "mongoose": "^8.0.2",
+    "path": "^0.12.7"
   }
 }
