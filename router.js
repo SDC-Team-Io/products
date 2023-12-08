@@ -88,7 +88,7 @@ router.get('/products/:id/related', (req, res) => {
     if (!data) {
       res.sendStatus(404);
     } else {
-      res.send(data);
+      res.send(data.related);
     }
   })
   .catch(() => {
