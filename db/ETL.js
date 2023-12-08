@@ -14,7 +14,7 @@ const photos = __dirname + '/csvs/photos.csv';
 const skus = __dirname + '/csvs/skus.csv';
 
 const populateData = async (path, constructor, page) => {
-  await mongoose.connect(url)
+  await mongoose.connect(url);
 
   const products = mongoose.model('products', productsSchema);
 
