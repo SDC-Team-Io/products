@@ -4,7 +4,7 @@ const productsSchema = require('./productsSchema');
 const stylesSchema = require('./stylesSchema');
 const fs = require('fs');
 
-const url = 'mongodb://localhost:27017/test'
+const url = process.env.MONGO_URL
 const certificate = 'db/mongoose-certificate.pem';
 
 const product = __dirname + '/csvs/product.csv';
