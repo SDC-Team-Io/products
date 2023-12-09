@@ -1,9 +1,10 @@
 const { parse } = require('csv-parse');
 const mongoose = require('mongoose');
-const productsSchema = require('./productsSchemaNew');
+const productsSchema = require('./productsSchema');
+const stylesSchema = require('./stylesSchema');
 const fs = require('fs');
 
-const url = 'mongodb://localhost:27017/products'
+const url = process.env.MONGO_URL
 const certificate = 'db/mongoose-certificate.pem';
 
 const product = __dirname + '/csvs/product.csv';
@@ -13,14 +14,16 @@ const styles = __dirname + '/csvs/styles.csv';
 const photos = __dirname + '/csvs/photos.csv';
 const skus = __dirname + '/csvs/skus.csv';
 
-const populateData = async (path, constructor, page) => {
-  await mongoose.connect(url);
+const productsModel = mongoose.model('products', productsSchema);
+const stylesModel = mongoose.model('styles', stylesSchema);
 
-  const products = mongoose.model('products', productsSchema);
+
+const populateData = async (model, path, constructor, page) => {
+  await mongoose.connect(url);
 
   console.log("Connected to MongoDB.");
 
-  const readData = (path, constructor, page) => new Promise((resolve, reject) => {
+  const readData = (model, path, constructor, page) => new Promise((resolve, reject) => {
     let doc = [];
     let length = doc.length;
 
@@ -50,7 +53,7 @@ const populateData = async (path, constructor, page) => {
           let i = count * 10000;
           let chunk = doc.slice(i, i + 10000);
           console.log('Writing lines ' + i + ' to ' + (i + chunk.length - 1) + '.');
-          products.bulkWrite(chunk)
+          model.bulkWrite(chunk)
           .then((res) => {
             delete res;
             delete chunk;
@@ -81,7 +84,7 @@ const populateData = async (path, constructor, page) => {
         .catch(err => reject(err));
       })
   })
-  if(path && constructor) readData(path, constructor)
+  if(path && constructor) readData(model, path, constructor)
   .then(() => {
     console.log('Done!')
     mongoose.connection.close();
@@ -92,54 +95,54 @@ const populateData = async (path, constructor, page) => {
   });
 
 
-  if(!path || !constructor) readData(styles, stylesConstructor)
+  if(!path || !constructor) readData(stylesModel, styles, stylesConstructor)
   .then((res) => {
     delete res;
-    return readData(photos, photosConstructor, 1);
+    return readData(stylesModel, photos, photosConstructor, 1);
   })
   .then((res) => {
     delete res;
-    return readData(photos, photosConstructor, 2);
+    return readData(stylesModel, photos, photosConstructor, 2);
   })
   .then((res) => {
     delete res;
-    return readData(photos, photosConstructor, 3);
+    return readData(stylesModel, photos, photosConstructor, 3);
   })
   .then((res) => {
     delete res;
-    return readData(product, productConstructor);
+    return readData(productsModel, product, productConstructor);
   })
   .then((res) => {
     delete res;
-    return readData(features, featuresConstructor);
+    return readData(productsModel, features, featuresConstructor);
   })
   .then((res) => {
     delete res;
-    return readData(related, relatedConstructor);
+    return readData(productsModel, related, relatedConstructor);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 1);
+    return readData(stylesModel, skus, skusConstructor, 1);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 2);
+    return readData(stylesModel, skus, skusConstructor, 2);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 3);
+    return readData(stylesModel, skus, skusConstructor, 3);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 4);
+    return readData(stylesModel, skus, skusConstructor, 4);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 5);
+    return readData(stylesModel, skus, skusConstructor, 5);
   })
   .then((res) => {
     delete res;
-    return readData(skus, skusConstructor, 6);
+    return readData(stylesModel, skus, skusConstructor, 6);
   })
   .then(() => {
     console.log('Done!')
@@ -155,9 +158,9 @@ const populateData = async (path, constructor, page) => {
 const productConstructor = (data) => {
   let query = {};
   query.updateOne = {
-    filter: { product_id: data[0] },
+    filter: { id: data[0] },
     update: {
-      product_id: data[0] * 1,
+      id: data[0] * 1,
       id: data[0] * 1,
       name: data[1],
       slogan: data[2],
@@ -177,7 +180,7 @@ const featuresConstructor = (data) => {
   if(!data[1]) return;
   let query = {};
   query.updateOne = {
-    filter: { product_id: data[1] },
+    filter: { id: data[1] },
     update: {
       $push: {
         features: {
@@ -195,20 +198,14 @@ const stylesConstructor = (data) => {
   if(!data[1]) return;
   let query = {};
   query.updateOne = {
-    filter: { product_id: data[1] },
+    filter: { style_id: data[0] },
     update: {
       product_id: data[1],
-      id: data[1],
-      $push: {
-        features: [],
-        styles: {
-          style_id: data[0],
-          name: data[2],
-          original_price: data[4],
-          sale_price: data[3],
-          default_style: data[5],
-        }
-      }
+      style_id: data[0],
+      name: data[2],
+      original_price: data[4],
+      sale_price: data[3],
+      default_style: data[5],
     },
     upsert: true,
   }
@@ -220,17 +217,16 @@ const skusConstructor = (data) => {
   if(!data[1]) return;
   let query = {};
   query.updateOne = {
-    filter: { 'styles.style_id': { $eq: data[1] } },
+    filter: { style_id: { $eq: data[1] } },
     update: {
       $push: {
-        'styles.$[i].skus': {
+        skus: {
           sku: data[0],
           quantity: data[3],
           size: data[2],
         }
       }
-    },
-    arrayFilters: [{ 'i.style_id': data[1] }]
+    }
   }
   return query;
 }
@@ -240,16 +236,15 @@ const photosConstructor = (data) => {
   if(!data[1]) return;
   let query = {};
   query.updateOne = {
-    filter: { 'styles.style_id': { $eq: data[1] } },
+    filter: { style_id: data[1] },
     update: {
       $push: {
-        'styles.$[i].photos': {
+        photos: {
           thumbnail_url: data[3] || undefined,
           url: data[2],
         }
       }
-    },
-    arrayFilters: [{ 'i.style_id': data[1] }]
+    }
   }
   return query;
 }
@@ -259,7 +254,7 @@ const relatedConstructor = (data) => {
   if(!data[1]) return;
   let query = {};
   query.updateOne = {
-    filter: { product_id: data[1] },
+    filter: { id: data[1] },
     update: {
       $push: {
         related: data[2]
@@ -269,17 +264,17 @@ const relatedConstructor = (data) => {
   return query;
 }
 
-module.exports.populateProducts = () => populateData(product, productConstructor);
-module.exports.populateStyles = () => populateData(styles, stylesConstructor);
-module.exports.populateFeatures = () => populateData(features, featuresConstructor);
-module.exports.populatePhotos1 = () => populateData(photos, photosConstructor, 1);
-module.exports.populatePhotos2 = () => populateData(photos, photosConstructor, 2);
-module.exports.populatePhotos3 = () => populateData(photos, photosConstructor, 3);
-module.exports.populateRelated = () => populateData(related, relatedConstructor);
-module.exports.populateSkus1 = () => populateData(skus, skusConstructor, 1);
-module.exports.populateSkus2 = () => populateData(skus, skusConstructor, 2);
-module.exports.populateSkus3 = () => populateData(skus, skusConstructor, 3);
-module.exports.populateSkus4 = () => populateData(skus, skusConstructor, 4);
-module.exports.populateSkus5 = () => populateData(skus, skusConstructor, 5);
-module.exports.populateSkus6 = () => populateData(skus, skusConstructor, 6);
+module.exports.populateProducts = () => populateData(productsModel, product, productConstructor);
+module.exports.populateStyles = () => populateData(stylesModel, styles, stylesConstructor);
+module.exports.populateFeatures = () => populateData(productsModel, features, featuresConstructor);
+module.exports.populatePhotos1 = () => populateData(stylesModel, photos, photosConstructor, 1);
+module.exports.populatePhotos2 = () => populateData(stylesModel, photos, photosConstructor, 2);
+module.exports.populatePhotos3 = () => populateData(stylesModel, photos, photosConstructor, 3);
+module.exports.populateRelated = () => populateData(productsModel, related, relatedConstructor);
+module.exports.populateSkus1 = () => populateData(stylesModel, skus, skusConstructor, 1);
+module.exports.populateSkus2 = () => populateData(stylesModel, skus, skusConstructor, 2);
+module.exports.populateSkus3 = () => populateData(stylesModel, skus, skusConstructor, 3);
+module.exports.populateSkus4 = () => populateData(stylesModel, skus, skusConstructor, 4);
+module.exports.populateSkus5 = () => populateData(stylesModel, skus, skusConstructor, 5);
+module.exports.populateSkus6 = () => populateData(stylesModel, skus, skusConstructor, 6);
 module.exports.populateData = populateData;

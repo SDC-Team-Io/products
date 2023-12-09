@@ -3,11 +3,12 @@ const path = require('path');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const router = require('./router');
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
 
-const url = 'mongodb://localhost:27017/products'
+const url = process.env.MONGO_URL;
 const certificate = path.join(__dirname, '/db/mongoose-certificate.pem');
 
 
@@ -18,13 +19,18 @@ app.use(express.static(path.join(__dirname, './public/dist')));
 
 console.log('Connecting to MongoDB...');
 
-mongoose.connect(url)
+mongoose.connect(url, {
+  ssl: true,
+  tlsCertificateKeyFile: certificate,
+  authMechanism: 'MONGODB-X509',
+  authSource: '$external'
+})
 .then(() => {
   console.log('Connected!');
   app.listen(port, () => {
     console.log('Products Server Live on Port ' + port);
   })
 })
-.catch(() => {
-  console.error('Error connecting to Mongo Database')
+.catch((err) => {
+  console.error('Error connecting to Mongo Database: ' + err)
 })
