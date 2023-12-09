@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const path = require('path');
 const mongoose = require('mongoose');
-const productsSchema = require('./db/productsSchema')
+const productsSchema = require('./db/productsSchema');
+const stylesSchema = require('./db/stylesSchema');
 
 const products = mongoose.model('products', productsSchema);
-
+const styles = mongoose.model('styles', stylesSchema);
 
 router.get('/products', (req, res) => {
 
@@ -20,7 +21,7 @@ router.get('/products', (req, res) => {
     category: 1,
     default_price: 1,
   })
-    .sort({ product_id: 1 })
+    .sort({ id: 1 })
     .skip((count * page) - count)
     .limit(count)
   .then((data) => {
@@ -37,8 +38,7 @@ router.get('/products', (req, res) => {
 
 
 router.get('/products/:id', (req, res) => {
-
-  products.findOne({product_id: req.params.id}, {
+  products.findOne({id: req.params.id}, {
     _id: 0,
     id: 1,
     name: 1,
@@ -62,11 +62,7 @@ router.get('/products/:id', (req, res) => {
 
 
 router.get('/products/:id/styles', (req, res) => {
-  products.findOne({product_id: req.params.id}, {
-    _id: 0,
-    product_id: 1,
-    styles: 1,
-  })
+  styles.find({product_id: req.params.id})
   .then((data) => {
     if (!data) {
       res.sendStatus(404);
@@ -79,8 +75,9 @@ router.get('/products/:id/styles', (req, res) => {
   })
 })
 
+
 router.get('/products/:id/related', (req, res) => {
-  products.findOne({product_id: req.params.id}, {
+  products.findOne({id: req.params.id}, {
     _id: 0,
     related: 1,
   })

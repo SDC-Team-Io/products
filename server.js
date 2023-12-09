@@ -7,7 +7,7 @@ const router = require('./router');
 const app = express();
 const port = 3000;
 
-const url = 'mongodb://localhost:27017/products'
+const url = 'mongodb://localhost:27017/test'
 const certificate = path.join(__dirname, '/db/mongoose-certificate.pem');
 
 
