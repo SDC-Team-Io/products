@@ -130,6 +130,6 @@ dist
 .pnp.*
 
 
-/db/mongoose-certificate.pem
+*.pem
 
 /db/csvs/*
