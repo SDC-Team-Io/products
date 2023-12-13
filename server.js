@@ -11,7 +11,6 @@ const port = 3000;
 const url = process.env.MONGO_URL;
 const certificate = path.join(__dirname, '/db/mongoose-certificate.pem');
 
-(url);
 
 app.use(morgan('tiny'));
 app.use('/', router);

@@ -59,7 +59,6 @@ router.get('/products/:id', (req, res) => {
   if(cached !== null) {
     res.send(cached);
   } else {
-    (req.params, req.params.id);
     products.findOne({id: req.params.id}, {
       _id: 0,
       id: 1,
