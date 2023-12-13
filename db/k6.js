@@ -11,6 +11,6 @@ export const options = {
 
 export default function() {
   const product = Math.floor(Math.random() * 1000011);
-  http.get(`http://localhost:3000/products/${product}`);
+  http.get(`http://localhost:3000/products`);
   sleep(1);
 }
