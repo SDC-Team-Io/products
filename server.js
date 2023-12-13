@@ -19,12 +19,7 @@ app.use(express.static(path.join(__dirname, './public/dist')));
 
 console.log('Connecting to MongoDB...');
 
-mongoose.connect(url, {
-  ssl: true,
-  tlsCertificateKeyFile: certificate,
-  authMechanism: 'MONGODB-X509',
-  authSource: '$external'
-})
+mongoose.connect(url)
 .then(() => {
   console.log('Connected!');
   app.listen(port, () => {
