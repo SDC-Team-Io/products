@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const productsSchema = require('./productsSchema');
 const stylesSchema = require('./stylesSchema');
 const fs = require('fs');
+require('dotenv').config();
 
 const url = process.env.MONGO_URL
 const certificate = 'db/mongoose-certificate.pem';
@@ -19,6 +20,8 @@ const stylesModel = mongoose.model('styles', stylesSchema);
 
 
 const populateData = async (model, path, constructor, page) => {
+  console.log(url);
+	
   await mongoose.connect(url);
 
   console.log("Connected to MongoDB.");
